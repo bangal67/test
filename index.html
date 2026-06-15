@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ฟอร์มบันทึกข้อมูลนักเรียน</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">ระบบบันทึกข้อมูลนักเรียน</h2>
+        
+        <form id="studentForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">คำนำหน้าชื่อ</label>
+                <select id="prefix" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- เลือกคำนำหน้า --</option>
+                    <option value="เด็กชาย">เด็กชาย</option>
+                    <option value="เด็กหญิง">เด็กหญิง</option>
+                    <option value="นาย">นาย</option>
+                    <option value="นางสาว">นางสาว</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">ชื่อ</label>
+                <input type="text" id="firstName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">นามสกุล</label>
+                <input type="text" id="lastName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">ชั้นมัธยมศึกษาปีที่</label>
+                <select id="grade" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- เลือกชั้นปี --</option>
+                    <option value="1">มัธยมศึกษาปีที่ 1</option>
+                    <option value="2">มัธยมศึกษาปีที่ 2</option>
+                    <option value="3">มัธยมศึกษาปีที่ 3</option>
+                    <option value="4">มัธยมศึกษาปีที่ 4</option>
+                    <option value="5">มัธยมศึกษาปีที่ 5</option>
+                    <option value="6">มัธยมศึกษาปีที่ 6</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">ห้อง</label>
+                <input type="number" id="room" min="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น 1, 2, 3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">เลขที่</label>
+                <input type="number" id="no" min="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 bg-gray-50 border focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น 1, 15">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition duration-200 font-semibold">
+                บันทึกข้อมูล
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // URL ของ Google Apps Script Web App ของคุณ
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbys_SJcO6AbPkSjr6eUYf-8FJPIBMVXObf98_tJnRhJ7AJotqqGDMH8PPP1ICj1xqKn/exec";
+
+        document.getElementById('studentForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // ป้องกันการรีเฟรชหน้าจอตามปกติของฟอร์ม
+
+            // แสดง SweetAlert2 สถานะกำลังโหลด/กำลังบันทึกข้อมูล
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                text: 'กรุณารอสักครู่ ระบบกำลังส่งข้อมูลไปยังฐานข้อมูล',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading(); // แสดงสัญลักษณ์หมุนๆ
+                }
+            });
+
+            // ดึงค่าจากฟอร์มเพื่อเตรียมส่ง
+            const prefix = document.getElementById('prefix').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const grade = document.getElementById('grade').value;
+            const room = document.getElementById('room').value;
+            const no = document.getElementById('no').value;
+
+            // กำหนดชื่อฟังก์ชัน Callback สำหรับ JSONP (จะถูกเรียกใช้เมื่อบันทึกเสร็จ)
+            const callbackName = 'jsonpCallback_' + Date.now();
+
+            // สร้าง Query String เพื่อส่งข้อมูลแบบ GET (ตามหลักการของ JSONP)
+            const queryParams = `?callback=${callbackName}&prefix=${encodeURIComponent(prefix)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&grade=${encodeURIComponent(grade)}&room=${encodeURIComponent(room)}&no=${encodeURIComponent(no)}`;
+            
+            // สร้าง Element <script> เพื่อยิงข้ามโดเมน (ขจัดปัญหา Cross-Origin)
+            const script = document.createElement('script');
+            script.src = scriptUrl + queryParams;
+
+            // สร้างฟังก์ชัน Callback รอรับการตอบกลับจาก Google Apps Script
+            window[callbackName] = function(response) {
+                if (response && response.status === 'success') {
+                    // ปิดโหลดเดอร์และแสดงแจ้งเตือนสำเร็จ
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ!',
+                        text: 'ข้อมูลของท่านถูกจัดเก็บเรียบร้อยแล้ว',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    document.getElementById('studentForm').reset(); // เคลียร์ข้อมูลในฟอร์มออก
+                } else {
+                    // หากเกิดข้อผิดพลาดฝั่ง Server
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: response.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+                    });
+                }
+                
+                // ลบแท็ก script และฟังก์ชันชั่วคราวออกเพื่อประหยัดหน่วยความจำ
+                document.body.removeChild(script);
+                delete window[callbackName];
+            };
+
+            // หากเกิดข้อผิดพลาดในการโหลด Script (เช่น URL ผิด หรือเน็ตหลุด)
+            script.onerror = function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เชื่อมต่อล้มเหลว',
+                    text: 'ไม่สามารถติดต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบอินเทอร์เน็ตของคุณ',
+                });
+                document.body.removeChild(script);
+                delete window[callbackName];
+            };
+
+            // แทรกสคริปต์เข้าไปในเอกสารเพื่อเริ่มทำงาน
+            document.body.appendChild(script);
+        });
+    </script>
+</body>
+</html>
